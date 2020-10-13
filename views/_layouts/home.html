@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>{{block 'title'}}默认标题{{/block}}</title>
+  <link rel="stylesheet" href="/node_modules/bootstrap/dist/css/bootstrap.css">
+  {{block 'head'}}{{/block}}
+</head>
+
+<body>
+  <!-- 加载_partials文件夹中的header.html文件 -->
+  {{include '../_partials/header.html'}}
+
+  <!-- 孩子填坑的部分 -->
+  {{block 'body'}}{{/block}}
+  
+  <!-- 加载_partials文件夹中的footer.html文件 -->
+  {{include '../_partials/footer.html'}}
+  <script src="/node_modules/jquery/dist/jquery.js"></script>
+  <script src="/node_modules/bootstrap/dist/js/bootstrap.js"></script>
+  
+  <!-- 孩子填坑的部分 -->
+  {{block 'script'}}{{/block}}
+</body>
+
+</html>
