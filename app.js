@@ -6,6 +6,7 @@ const path = require('path');
 const port = 3000;
 // const router = require('./routers/router');
 //导入路由模块
+const router = require('./routers/router')
 const bodyParser = require('body-parser');
 const md5 = require('blueimp-md5');
 const session = require('express-session');
@@ -57,7 +58,7 @@ app.set('views', path.join(__dirname, 'views'));
 //app.set('view engine', 'html');
 
 //挂载路由 一定要放在后面
-// app.use(router);
+app.use(router);
 app.use(LunbotuR);
 app.use(newslistR);
 app.use(newsinfoR)
