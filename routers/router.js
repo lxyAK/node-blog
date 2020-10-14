@@ -4,7 +4,9 @@ const eventproxy = require('eventproxy');
 //导入模型构造函数
 const Topic = require('../models/topic.js');
 const User = require('../models/user.js');
+const Reply = require('../models/reply');
 const md5 = require('blueimp-md5');
+const { count } = require('../models/topic.js');
 const ep = new eventproxy(); //处理异步代码的工具
 
 //首页
@@ -334,17 +336,67 @@ router.get('/topics/:id', (req, res, next) => {
   if (!req.session.user) {
     return res.redirect('/login');
   }
-  let topicId = req.params.id.replace(/\"/g,"")
-  console.log(topicId);
-  Topic.findOne({_id:topicId}, (err, topic) => {
+  let topicId = req.params.id;
+  let query = {
+    topicsId: topicId,
+  };
+  console.log(query);
+  Topic.findOne({ _id: topicId }, (err, topic) => {
     ep.emit('topic_data_ok', topic);
   });
-  ep.all('topic_data_ok', (topic) => {
-    res.render('../views/topic/show.html', {
-      user: req.session.user,
-      topic: topic,
+  // 根据话题内容的id查询所有相关回复的数量
+  Reply.countDocuments(query, (err, allCount) => {
+    ep.emit('allCount_data_ok', allCount);
+  });
+  Reply.find(query, (err, allReplies) => {
+    ep.emit('allReplies_data_ok', allReplies);
+  });
+  ep.all(
+    'topic_data_ok',
+    'allCount_data_ok',
+    'allReplies_data_ok',
+    (topic, allCount, allReplies) => {
+      // console.log(allCount);
+      // console.log(allReplies);
+      res.render('../views/topic/show.html', {
+        user: req.session.user,
+        topic,
+        allCount,
+        allReplies
+      });
+    }
+  );
+});
+
+// 发表评论处理
+router.post('/topics/:id', (req, res, next) => {
+  // 接收用户发来的评论信息，验证用户的身份
+  let comments = req.body.comments;
+  let topicsId = req.params.id;
+  // 通过 session 记录的用户信息获取当前用户的数据
+  let user_name = req.session.user.nickname;
+  // 组成一个新的回复数据
+  let userReply = {
+    topicsId,
+    comments,
+    user_name,
+  };
+  console.log(userReply);
+  new Reply(userReply).save(function (err, data) {
+    if (err) {
+      return res.status(500).json({
+        err_code: 500,
+        message: '服务端错误',
+      });
+      // return next(err);
+    }
+
+    res.status(200).json({
+      err_code: 0,
+      message: 'ok',
     });
   });
+  // res.redirect('/topics/'+topicsId)
 });
 
 /**

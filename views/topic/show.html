@@ -15,92 +15,114 @@
 <section class="container">
   <div class="row">
     <div class="col-md-9">
-      <div class="page-header" style="padding: 0 0 ; border: none;">
-        <h1>{{topic.title}}</h1>
+      <div class="page-header" style="padding: 0 0 ;">
+        <h1 style="font-size: 30px;">{{topic.title}}</h1>
+        <span>发布时间：{{topic.add_time}}&nbsp;&nbsp;&nbsp;</span><span>作者：{{topic.user_name}}</span>
       </div>
       <!-- 能容主题部分 -->
       <div>
         <%-md.render(topic.content)%>
       </div>
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <span>lipengzhou</span> commented
-          <span>24 minutes ago</span>
-          <span class="action">
-            <a href=""><i class="glyphicon glyphicon-thumbs-up pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-          </span>
-        </div>
-        <div class="panel-body">
-          评论测试
-        </div>
-      </div>
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <span>lipengzhou</span> commented
-          <span>24 minutes ago</span>
-          <span class="action">
-            <a href=""><i class="glyphicon glyphicon-thumbs-up pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-          </span>
-        </div>
-        <div class="panel-body">
-          评论测试
-        </div>
-      </div>
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <span>lipengzhou</span> commented
-          <span>24 minutes ago</span>
-          <span class="action">
-            <a href=""><i class="glyphicon glyphicon-thumbs-up pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-          </span>
-        </div>
-        <div class="panel-body">
-          评论测试
-        </div>
-      </div>
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <span>lipengzhou</span> commented
-          <span>24 minutes ago</span>
-          <span class="action">
-            <a href=""><i class="glyphicon glyphicon-thumbs-up pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-          </span>
-        </div>
-        <div class="panel-body">
-          评论测试
-        </div>
-      </div>
-      <div class="panel panel-default">
-        <div class="panel-heading">
-          <span>lipengzhou</span> commented
-          <span>24 minutes ago</span>
-          <span class="action">
-            <a href=""><i class="glyphicon glyphicon-thumbs-up pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
-          </span>
-        </div>
-        <div class="panel-body">
-          评论测试
-        </div>
-      </div>
       <hr>
-      <form>
-        <div class="form-group">
-          <label for="exampleInputPassword1">添加回复</label>
-          <textarea class="form-control" name="" id="" cols="10" rows="10"></textarea>
+      <!-- 评论回复区域 -->
+      <div class="container">
+        
+      </div>
+      <h1 style="font-size: 20px;">评论回复</h1>
+      
+      <span style="padding: 10px;">回复数：{{allCount}}条</span>
+      <!-- 回复列表 -->
+      <% for(var i = 0; i < allReplies.length; i++){ %>
+      <div class="panel panel-default">
+        <div class="panel-heading">
+          <span><strong><%=allReplies[i].user_name%>的评论</strong></span>&nbsp;&nbsp;&nbsp;
+          <span><%-moment(allReplies[i].add_time, "YYYYMMDD").fromNow()%></span>
+          <span class="action">
+            <a href=""><i class="glyphicon glyphicon-thumbs-up pull-right"></i></a>
+            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
+            <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
+          </span>
         </div>
-        <button type="submit" class="btn btn-success">回复</button>
+        <div class="panel-body">
+          <%=allReplies[i].comments%>
+        </div>
+      </div>
+      <% } %>
+      <!-- 回复列表 end -->
+      <hr>
+      <form id="comments_form">
+        <div class="alert alert-success" role="alert">
+          <strong>发表成功!</strong>
+        </div>
+        <div class="alert alert-danger" role="alert">
+          <strong>回复内容不能为空，发表失败!</strong>
+        </div>
+        <div class="form-group">
+          <label for="comments_show">添加回复</label>
+          <textarea class="form-control" name="comments" id="comments_show" cols="10" rows="10"></textarea>
+        </div>
+        <button type="submit" class="btn btn-success" onclick="checkSubmit()">回复</button>
       </form>
     </div>
   </div>
+  <script src="/node_modules/jquery/dist/jquery.js"></script>
+  <!-- 表单验证 -->
+  <script>
+    $('.alert-success').hide()
+    $('.alert-danger').hide()
+    $('.tip').hide()
+    // 验证内容
+    function checkContent() {
+      let content = $('#comments_show')
+      if (content.val() == '')
+        $('.tip1').show()
+    }
+
+    function checkSubmit() {
+      let content = $('#comments_show')
+      if (content.val() == '') {
+        $('.alert-success').hide()
+        $('.alert-danger').show()
+      } else {
+        $('.alert-danger').hide()
+        $('.alert-success').show()
+      }
+    }
+
+    // 验证成功，发送请求
+    $('#comments_form').on('submit', function (e) {
+      let content = $('#comments_show')
+      if (content.val() == '') {
+        $('.alert-danger').show()
+        return false
+      }
+      e.preventDefault()
+      var formData = $(this).serialize()
+      // console.log(formData)
+      $.ajax({
+        url: '/topics/{{@topic._id}}',
+        type: 'post',
+        data: formData,
+        dataType: 'json',
+        success: function (data) {
+          console.log(data);
+          var err_code = data.err_code
+          if (err_code === 0) {
+            console.log(1);
+            // $('.alert-success').hide()
+            // 服务端重定向针对异步请求无效
+            content.val("")
+            window.location.href = '/topics/{{@topic._id}}'
+          } else if (err_code === 1) {
+            // $('.alert-danger').hide()
+          } else if (err_code === 500) {
+            window.alert('服务器忙，请稍后重试！')
+          }
+        }
+      })
+    })
+
+
+  </script>
 </section>
 {{/block}}

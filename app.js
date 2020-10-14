@@ -8,6 +8,8 @@ const template = require('art-template')
 // 导入 markdown处理模块
 const MarkdownIt = require('markdown-it')
 const md = new MarkdownIt()
+// 导入时间格式化模块
+const moment = require('moment');
 
 
 // const router = require('./routers/router');
@@ -81,6 +83,7 @@ template.defaults.imports.getDate = (dateTime) => {
 
 // locals 对象上绑定 md 处理模块
 app.locals.md = md
+app.locals.moment = moment
 
 //挂载路由 一定要放在后面
 app.use(router);
