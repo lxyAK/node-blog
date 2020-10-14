@@ -1,7 +1,7 @@
-const mongoose = require('mongoose')
+const mongoose = require('../mongoose_hanlde.js')
 
 //链接数据库
-mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true,useFindAndModify:false });
+// mongoose.connect('mongodb://localhost:27017/test', { useNewUrlParser: true, useUnifiedTopology: true,useFindAndModify:false });
 
 // mongoose.set('useFindAndModify', false)
 

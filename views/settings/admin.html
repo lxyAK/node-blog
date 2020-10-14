@@ -10,20 +10,19 @@
       <h2>修改密码</h2>
     </div>
     <hr>
-    <form>
-      <div class="form-group">
-        <label for="exampleInputPassword1">当前密码</label>
-        <input type="password" class="form-control" id="exampleInputPassword1" placeholder="">
-      </div>
+    <form id="admin_form">
+      
       <div class="form-group">
         <label for="exampleInputPassword1">新的密码</label>
-        <input type="password" class="form-control" id="exampleInputPassword1" placeholder="">
+        <input type="password" class="form-control" name="newPassword" id="password" placeholder=""
+          onblur="checkpas1()">
       </div>
       <div class="form-group">
         <label for="exampleInputPassword1">确认密码</label>
-        <input type="password" class="form-control" id="exampleInputPassword1" placeholder="">
+        <input type="password" class="form-control" name="rePassword" id="rePassword" placeholder="" onblur="checkpas1()">
       </div>
-      <button type="submit" class="btn btn-success">保存</button>
+      <span class="tip" style="color: red;">两次输入的密码不一致</span><br>
+      <button type="submit" class="btn btn-success"  onclick="checkpas2()">修改密码</button>
     </form>
     <div class="subhead">
       <h2>注销账号</h2>
@@ -36,4 +35,64 @@
     <hr>
   </div>
 </section>
+<script src="/node_modules/jquery/dist/jquery.js"></script>
+<script>
+  // 表单验证
+  $(".tip").hide();
+  function checkpas1() {//当第一个密码框失去焦点时，触发checkpas1事件
+    var pas1 = document.getElementById("password").value;
+    var pas2 = document.getElementById("rePassword").value;//获取两个密码框的值
+    // console.log(pas1 != pas2,pas2 != "");
+    if (pas1 != pas2 && pas2 != "") {//此事件当两个密码不相等且第二个密码是空的时候会显示错误信息
+      $(".tip").show();
+    } else {
+      $(".tip").hide();//若两次输入的密码相等且都不为空时，不显示错误信息。
+    }
+  }
+
+  function checkpas() {//当第一个密码框失去焦点时，触发checkpas2件
+    var pas1 = document.getElementById("password").value;
+    var pas2 = document.getElementById("rePassword").value;//获取两个密码框的值
+    if (pas1 != pas2) {
+      $(".tip").show();//当两个密码不相等时则显示错误信息
+    } else {
+      $(".tip").hide();
+    }
+  }
+
+  function checkpas2() {//点击提交按钮时，触发checkpas2事件，会进行弹框提醒以防无视错误信息提交
+    var pas3 = document.getElementById("password").value;
+    var pas4 = document.getElementById("rePassword").value;
+    if (pas3 != pas4) {
+      alert("两次输入的密码不一致！");
+      return false;
+    }
+  }
+
+
+  $('#admin_form').on('submit', function (e) {
+    e.preventDefault()
+    var formData = $(this).serialize()
+    console.log(formData)
+    $.ajax({
+      url: '/settings/admin',
+      type: 'post',
+      data: formData,
+      dataType: 'json',
+      success: function (data) {
+        // console.log(data);
+        var err_code = data.err_code
+        if (err_code === 0) {
+          window.alert('修改成功！')
+          // 服务端重定向针对异步请求无效
+          window.location.href = '/'
+        } else if (err_code === 1) {
+          window.alert('修改失败')
+        } else if (err_code === 500) {
+          window.alert('服务器忙，请稍后重试！')
+        }
+      }
+    })
+  })
+</script>
 {{/block}}

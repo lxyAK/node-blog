@@ -26,7 +26,7 @@ const newslistSchema = new Schema(
     add_time: {
       type: Date,
       required: true,
-      default: Date.now,
+      default: Date.now(),
     },
     title: {
       type: String,

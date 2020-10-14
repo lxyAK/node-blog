@@ -5,8 +5,15 @@
 {{block 'body'}}
 <section class="container">
   <div class="row">
-    <div class="col-md-5">
-      <form>
+
+    <div class="alert alert-success" role="alert">
+      <strong>发表成功!</strong>
+    </div>
+    <div class="col-md-8">
+      <div class="alert alert-danger" role="alert">
+        <strong>标题或内容不能为空，发表失败!</strong>
+      </div>
+      <form id="new_form">
         <div class="form-group">
           <label for="exampleInputEmail1">选择板块</label>
           <select class="form-control">
@@ -17,16 +24,116 @@
           </select>
         </div>
         <div class="form-group">
-          <label for="exampleInputEmail1">标题</label>
-          <input type="email" class="form-control" id="exampleInputEmail1" placeholder="Email">
+          <label for="new_title">标题</label>
+          <input type="title" class="form-control" name="title" id="new_title" placeholder="标题" onblur="checkTitle()">
         </div>
-        <div class="form-group">
-          <label for="exampleInputPassword1">内容</label>
-          <textarea class="form-control" rows="3"></textarea>
-        </div>
-        <button type="submit" class="btn btn-default">Submit</button>
-      </form>
+        <span class="tip" style="color: red;">标题或内容不能为空</span><br>
     </div>
+    
+    <div class="col-md-12">
+      <button type="submit" class="btn btn-success" onclick="checkSubmit()" style="float: right;margin-bottom: 10px;">发表内容</button>
+      <label>内容</label>
+      <div id="test-editor" class="editormd pui-z-depth-3 pui-bg-white editormd-vertical"
+      style="width: 100%; height: 580px;">
+        <textarea rows="3" name="content" id="new_content" onblur="checkContent()" class="editormd-markdown-textarea"
+          style="display: none;"></textarea>
+      </div>
+    </div>
+    </form>
   </div>
+  </div>
+  <link rel="stylesheet" href="/node_modules/editor.md/css/editormd.css" />
+  <script src="/node_modules/jquery/dist/jquery.js"></script>
+  <script src="/node_modules/editor.md/editormd.amd.min.js"></script>
+  <script type="text/javascript">
+    $(function () {
+      var editor = editormd("test-editor", {
+        width: "100%",
+        height: 640,
+        path: "/node_modules/editor.md/lib/",
+        // saveHTMLToTextarea : true
+      });
+    });
+  </script>
+  <!-- 表单验证 -->
+  <script>
+    $('.alert-success').hide()
+    $('.alert-danger').hide()
+    $('.tip').hide()
+    $('.tip1').hide()
+    // 验证标题
+    function checkTitle() {
+      let title = $('#new_title')
+      if (title.val() == '')
+        $('.tip').show()
+      else
+        $('.tip').hide()
+
+    }
+    // 验证内容
+    function getVal() {
+      let content = $('#new_content')
+    console.log(content.val());
+    }
+
+
+    function checkContent() {
+      let content = $('#new_content')
+      if (content.val() == '')
+        $('.tip1').show()
+    }
+
+    function checkSubmit() {
+      let title = $('#new_title')
+      let content = $('#new_content')
+      if (title.val() == '') {
+        $('.alert-danger').show()
+      } else if (content.val() == '') {
+        $('.alert-danger').show()
+
+      } else {
+        $('.alert-danger').hide()
+        $('.alert-success').show()
+      }
+    }
+
+    // 验证成功，发送请求
+    $('#new_form').on('submit', function (e) {
+      let title = $('#new_title')
+      let content = $('#new_content')
+      if (title.val() == '') {
+        $('.alert-danger').show()
+        return false
+      } else if (content.val() == '') {
+        $('.alert-danger').show()
+        return false
+      }
+      e.preventDefault()
+      var formData = $(this).serialize()
+      console.log(formData)
+      $.ajax({
+        url: '/topics/new',
+        type: 'post',
+        data: formData,
+        dataType: 'json',
+        success: function (data) {
+          // console.log(data);
+          var err_code = data.err_code
+          if (err_code === 0) {
+            // $('.alert-success').hide()
+            // 服务端重定向针对异步请求无效
+            title.val("")
+            content.val("")
+          } else if (err_code === 1) {
+            // $('.alert-danger').hide()
+          } else if (err_code === 500) {
+            window.alert('服务器忙，请稍后重试！')
+          }
+        }
+      })
+    })
+
+
+  </script>
 </section>
 {{/block}}

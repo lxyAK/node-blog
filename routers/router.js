@@ -1,14 +1,39 @@
 const express = require('express');
 const router = express.Router();
+const eventproxy = require('eventproxy');
 //导入模型构造函数
+const Topic = require('../models/topic.js');
 const User = require('../models/user.js');
 const md5 = require('blueimp-md5');
+const ep = new eventproxy(); //处理异步代码的工具
 
 //首页
 router.get('/', (req, res) => {
   //console.log(req.session.user);
-  res.render('index.html', {
-    user: req.session.user,
+  // 获取博客数据
+  var page = parseInt(req.query.page) || 1;
+  page = page > 0 ? page : 1;
+  var count = 10;
+  var query = {};
+  var option = { skip: (page - 1) * count, limit: count, sort: '-add_time' };
+  // 获取10条博客内容
+  Topic.find(query, {}, option, (err, topics) => {
+    ep.emit('topic_data_ok', topics);
+  });
+  // 获取总页面
+  Topic.countDocuments(query, (err, allCount) => {
+    var pageCount = Math.ceil(allCount / count);
+    ep.emit('page_count_ok', pageCount);
+  });
+  ep.all('topic_data_ok', 'page_count_ok', function (topics, pageCount) {
+    console.log(topics);
+    // console.log(pageCount);
+    res.render('index.html', {
+      user: req.session.user,
+      topics: topics,
+      pageCount: pageCount,
+      page: page,
+    });
   });
 });
 
@@ -24,7 +49,7 @@ router.post('/login', (req, res, next) => {
    * 3.发送响应
    */
   var body = req.body;
-  console.log(body);
+  // console.log(body);
   //password要进行加密比对
   User.findOne(
     //password 反向解密
@@ -32,19 +57,19 @@ router.post('/login', (req, res, next) => {
     (err, user) => {
       // console.log(err, user);
       if (err) {
-        //设置自定义状态码
-        // return res.status(200).json({
-        // err_code: 500,
-        // message: 'Server is err',
-        // });
-        return next(err);
+        // 设置自定义状态码
+        // console.log(res.status(200));
+        return res.status(200).json({
+          err_code: 500,
+          message: 'Server is err',
+        });
       }
 
       //优先处理错误，如果user为null说明没有找到数据
       if (!user) {
-        //console.log(user);
+        // console.log(user);
         return res.status(200).json({
-          status: 1,
+          err_code: 1,
           message: 'Email or password is invalid',
         });
       }
@@ -52,18 +77,18 @@ router.post('/login', (req, res, next) => {
       //如果数据存在则表示登录成功，记录登录状态
       req.session.user = user;
       // console.log(req.session.user);
-      // res.status(200).json({
-      // err_code: 0,
-      // message: 'OK',
-      // });
+      res.status(200).json({
+        err_code: 0,
+        message: 'OK',
+      });
       //根据状态码
-      res
-        .status(200)
-        .json({
-          data:user,
-          status: 200,
-          message: 'ok',
-        })
+      // res
+      //   .status(200)
+      //   .json({
+      //     data:user,
+      //     status: 200,
+      //     message: 'ok',
+      //   })
     }
   );
 });
@@ -138,9 +163,9 @@ router.get('/logout', function (req, res) {
 
 //设置页面渲染
 router.get('/settings/profile', function (req, res, next) {
-  console.log('渲染设置页面：', req.session.user);
+  // console.log('渲染设置页面：', req.session.user);
   if (!req.session.user) {
-    return res.render('404.html');
+    return res.redirect('/login');
   }
   res.render('settings/profile.html', {
     user: req.session.user,
@@ -158,7 +183,7 @@ router.post('/settings/profile', function (req, res, next) {
   var body = req.body;
   var user = req.session.user;
   // console.log(user);
-  console.log('post请求体', body);
+  // console.log('post请求体', body);
   //通过用户提交的数据查看是否存在
   User.findOne({ nickname: body.nickname }, function (err, data) {
     if (err) {
@@ -200,6 +225,9 @@ router.post('/settings/profile', function (req, res, next) {
 
 //账户设置页面渲染
 router.get('/settings/admin', function (req, res, next) {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
   res.render('settings/admin.html', {
     user: req.session.user,
   });
@@ -207,8 +235,116 @@ router.get('/settings/admin', function (req, res, next) {
 
 //处理修改密码
 router.post('/settings/admin', function (req, res, next) {
-  //通过 session 数据获取用户的 id 然后跟数据库进行匹配
-  //接受用户的表单提交,找到密码反向解密,然后更新再加密
+  if (req.session) {
+    //通过 session 数据获取用户的 id 然后跟数据库进行匹配
+    //接受用户的表单提交,找到密码反向解密,然后更新再加密
+    /**
+     * 1.获取表单提交的数据
+     * 2.提交到数据库进行匹配
+     * 3.发送响应
+     */
+    var body = req.session.user; // 验证信息
+    // console.log(body);
+    var newBody = req.body; // 更新的信息
+    // 再次判断用户提交的密码是否一致
+    if (newBody.newPassword !== newBody.rePassword) return;
+    //password要进行加密比对,比对成功进行修改
+    User.findOneAndUpdate(
+      //查询条件 password 反向解密
+      {
+        email: body.email,
+        password: body.password,
+      },
+      // 修改的数据
+      { password: md5(md5(newBody.newPassword) + 'google20190830') },
+      //返回更新后的数据
+      { new: true },
+      (err, user) => {
+        // console.log(err, user);
+        if (err) {
+          // 设置自定义状态码
+          // console.log(res.status(200));
+          return res.status(200).json({
+            err_code: 500,
+            message: 'Server is err',
+          });
+        }
+
+        //优先处理错误，如果user为null说明没有找到数据
+        if (!user) {
+          // console.log(user);
+          return res.status(200).json({
+            err_code: 1,
+            message: 'Email or password is invalid',
+          });
+        }
+        // console.log(user);
+        //密码修改成功，记录登录状态
+        req.session.user = user;
+        // console.log(req.session.user);
+        res.status(200).json({
+          err_code: 0,
+          message: 'OK',
+        });
+      }
+    );
+  }
+});
+
+// 发表页面渲染
+router.get('/topics/new', (req, res, next) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  res.render('../views/topic/new.html', {
+    user: req.session.user,
+  });
+});
+
+// 发表话题内容页面处理
+router.post('/topics/new', (req, res, next) => {
+  // 接收用户的发表内容
+  let body = req.body;
+  // 根据用户的登录信息进行数据合并
+  let newBody = {
+    title: body.title,
+    content: body.content,
+    user_name: req.session.user.nickname,
+  };
+  // console.log(newBody);
+  //通过模型构造函数创建一条数据, 将用户传入req.body传入, 然后save保存数据持久化
+  new Topic(newBody).save(function (err, user) {
+    if (err) {
+      return res.status(500).json({
+        err_code: 500,
+        message: '服务端错误',
+      });
+      // return next(err);
+    }
+
+    res.status(200).json({
+      err_code: 0,
+      message: 'ok',
+    });
+  });
+});
+
+// 话题内容详情页面处理
+router.get('/topics/:id', (req, res, next) => {
+  if (!req.session.user) {
+    return res.redirect('/login');
+  }
+  let topicId = req.params.id.replace(/\"/g,"")
+  console.log(topicId);
+  Topic.findOne({_id:topicId}, (err, topic) => {
+    ep.emit('topic_data_ok', topic);
+  });
+  ep.all('topic_data_ok', (topic) => {
+    res.render('../views/topic/show.html', {
+      user: req.session.user,
+      topic: topic,
+    });
+  });
 });
 
 /**
@@ -216,16 +352,16 @@ router.post('/settings/admin', function (req, res, next) {
  */
 /* GET home page. */
 // 用来为这个用户存储一个 session
-router.get('/a', function (req, res, next) {
-  var a = Math.floor(Math.random() * 10) + '';
-  req.session.user = a;
-  res.send(a);
-});
+// router.get('/a', function (req, res, next) {
+//   var a = Math.floor(Math.random() * 10) + '';
+//   req.session.user = a;
+//   res.send(a);
+// });
 
-// 在页面上打印自己在 session 中存储的信息
-router.get('/b', function (req, res, next) {
-  req.session.touch();
-  res.send(req.session.user);
-});
+// // 在页面上打印自己在 session 中存储的信息
+// router.get('/b', function (req, res, next) {
+//   req.session.touch();
+//   res.send(req.session.user);
+// });
 
 module.exports = router;

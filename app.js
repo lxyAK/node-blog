@@ -4,27 +4,33 @@ const express = require('express');
 const app = express();
 const path = require('path');
 const port = 3000;
+const template = require('art-template')
+// 导入 markdown处理模块
+const MarkdownIt = require('markdown-it')
+const md = new MarkdownIt()
+
+
 // const router = require('./routers/router');
 //导入路由模块
-const router = require('./routers/router')
+const router = require('./routers/router');
 const bodyParser = require('body-parser');
 const md5 = require('blueimp-md5');
 const session = require('express-session');
 const LunbotuR = require('./routers/lunbotuR');
 const newslistR = require('./routers/newslistR');
-const newsinfoR = require('./routers/newsinfoR')
-const newscommentsR = require('./routers/newscommentsR')
-const imgcategorfR = require('./routers/imgcategorfR')
-const photolistR = require('./routers/photolistR')
-const photoinfoR = require('./routers/photoinfoR')
-const thumimagesR = require('./routers/thumimagesR')
-const goodslistR = require('./routers/goodslistR')
+const newsinfoR = require('./routers/newsinfoR');
+const newscommentsR = require('./routers/newscommentsR');
+const imgcategorfR = require('./routers/imgcategorfR');
+const photolistR = require('./routers/photolistR');
+const photoinfoR = require('./routers/photoinfoR');
+const thumimagesR = require('./routers/thumimagesR');
+const goodslistR = require('./routers/goodslistR');
 const goodsinfoimgR = require('./routers/goodsinfoimgR');
 const goodsinfoR = require('./routers/goodsinfoR');
-const getShopCarListR = require('./routers/getshopcarlistR')
+const getShopCarListR = require('./routers/getshopcarlistR');
 const MongoStore = require('connect-mongo')(session);
 
- // 引入数据库连接文件 
+// 引入数据库连接文件
 
 //加载静态资源 , 推荐以后所有的文件路径都使用__dirname来动态获取
 app.use('/public/', express.static(path.join(__dirname, './public/')));
@@ -40,9 +46,9 @@ app.use(
     resave: false,
     saveUninitialized: true,
     store: new MongoStore({
-      url:'mongodb://localhost/ims',
-      collection:'sessions'
-    })
+      url: 'mongodb://localhost/ims',
+      collection: 'sessions',
+    }),
   })
 );
 
@@ -57,25 +63,44 @@ app.set('views', path.join(__dirname, 'views'));
 //告诉 Express 给试图引擎设置文件扩展名
 //app.set('view engine', 'html');
 
+//注册一个过滤器 通过处理时间戳 转为日期格式
+template.defaults.imports.getDate = (dateTime) => {
+  const datetime = new Date(dateTime);
+
+  const year = datetime.getFullYear();
+  const month = ('0' + (datetime.getMonth() + 1)).slice(-2);
+  const date = ('0' + datetime.getDate()).slice(-2);
+  const hour = ('0' + datetime.getHours()).slice(-2);
+  const minute = ('0' + datetime.getMinutes()).slice(-2);
+  const second = ('0' + datetime.getSeconds()).slice(-2);
+
+  return (
+    year + '-' + month + '-' + date + ' ' + hour + ':' + minute + ':' + second
+  );
+};
+
+// locals 对象上绑定 md 处理模块
+app.locals.md = md
+
 //挂载路由 一定要放在后面
 app.use(router);
 app.use(LunbotuR);
 app.use(newslistR);
-app.use(newsinfoR)
-app.use(newscommentsR)
-app.use(imgcategorfR)
-app.use(photolistR)
-app.use(photoinfoR)
-app.use(thumimagesR)
-app.use(goodslistR)
-app.use(goodsinfoimgR)
-app.use(goodsinfoR)
-app.use(getShopCarListR)
+app.use(newsinfoR);
+app.use(newscommentsR);
+app.use(imgcategorfR);
+app.use(photolistR);
+app.use(photoinfoR);
+app.use(thumimagesR);
+app.use(goodslistR);
+app.use(goodsinfoimgR);
+app.use(goodsinfoR);
+app.use(getShopCarListR);
 
 // 配置一个处理 404 的中间件
 // 当前面没有任何能处理的中间件的时候,就进入这个中间件了
 app.use(function (req, res) {
-  res.send(null)
+  res.send(null);
 });
 
 //设置一个全局错误处理的中间件
@@ -87,12 +112,12 @@ app.use(function (err, req, res, next) {
 });
 
 // catch 404 and forward to error handler
-app.use(function(req, res, next) {
+app.use(function (req, res, next) {
   next(createError(404));
 });
 
 // error handler
-app.use(function(err, req, res, next) {
+app.use(function (err, req, res, next) {
   // set locals, only providing error in development
   res.locals.message = err.message;
   res.locals.error = req.app.get('env') === 'development' ? err : {};
@@ -101,8 +126,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 });
-
-
 
 app.listen(port, () =>
   console.log(`Server running at  http://127.0.0.1:${port}`)
