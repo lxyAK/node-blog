@@ -356,8 +356,8 @@ router.get('/topics/:id', (req, res, next) => {
     'allCount_data_ok',
     'allReplies_data_ok',
     (topic, allCount, allReplies) => {
-      // console.log(allCount);
-      // console.log(allReplies);
+      console.log(topic);
+      console.log(allReplies);
       res.render('../views/topic/show.html', {
         user: req.session.user,
         topic,

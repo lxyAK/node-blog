@@ -13,7 +13,7 @@ var TopicSchema = new mongoose.Schema({
     required: true,
   },
   add_time: {
-    type: String,
+    type: Date,
     required: true,
     default: moment().format('YYYY-MM-DD HH:mm:ss'),
   },

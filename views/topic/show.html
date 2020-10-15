@@ -12,12 +12,17 @@
 {{/block}}
 
 {{block 'body'}}
+
 <section class="container">
   <div class="row">
     <div class="col-md-9">
+      <ul class="breadcrumb">
+        <li><a href="/">首页</a></li>
+        <li>{{topic.title}}</li>
+    </ul>
       <div class="page-header" style="padding: 0 0 ;">
         <h1 style="font-size: 30px;">{{topic.title}}</h1>
-        <span>发布时间：{{topic.add_time}}&nbsp;&nbsp;&nbsp;</span><span>作者：{{topic.user_name}}</span>
+        <span>发布时间：{{ topic.add_time | getDate }}&nbsp;&nbsp;&nbsp;</span><span>作者：{{topic.user_name}}</span>
       </div>
       <!-- 能容主题部分 -->
       <div>
@@ -32,11 +37,11 @@
       
       <span style="padding: 10px;">回复数：{{allCount}}条</span>
       <!-- 回复列表 -->
-      <% for(var i = 0; i < allReplies.length; i++){ %>
+      {{each allReplies}}
       <div class="panel panel-default">
         <div class="panel-heading">
-          <span><strong><%=allReplies[i].user_name%>的评论</strong></span>&nbsp;&nbsp;&nbsp;
-          <span><%-moment(allReplies[i].add_time, "YYYYMMDD").fromNow()%></span>
+          <span><strong>{{$value.user_name}}的评论</strong></span>&nbsp;&nbsp;&nbsp;
+          <span>{{$value.add_time | getDate}}</span>
           <span class="action">
             <a href=""><i class="glyphicon glyphicon-thumbs-up pull-right"></i></a>
             <a href=""><i class="glyphicon glyphicon-remove-circle pull-right"></i></a>
@@ -44,10 +49,10 @@
           </span>
         </div>
         <div class="panel-body">
-          <%=allReplies[i].comments%>
+          {{$value.comments}}
         </div>
       </div>
-      <% } %>
+      {{/each}}
       <!-- 回复列表 end -->
       <hr>
       <form id="comments_form">
@@ -65,6 +70,7 @@
       </form>
     </div>
   </div>
+  <script src="/node_modules/moment/moment.js"></script>
   <script src="/node_modules/jquery/dist/jquery.js"></script>
   <!-- 表单验证 -->
   <script>

@@ -3,7 +3,7 @@ var createError = require('http-errors');
 const express = require('express');
 const app = express();
 const path = require('path');
-const port = 3000;
+const port = 4000;
 const template = require('art-template')
 // 导入 markdown处理模块
 const MarkdownIt = require('markdown-it')
